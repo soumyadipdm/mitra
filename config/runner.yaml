@@ -13,5 +13,7 @@ files:
   - /etc/resolv.conf
   - /etc/sysctl.conf
   - /etc/security/limits.conf
+  - /etc/ntp.conf
+  - /etc/fstab
 
 frequency: 300
