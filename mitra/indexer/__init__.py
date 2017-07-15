@@ -111,7 +111,7 @@ class Indexer(object):
         today = datetime.today().strftime('%Y-%m-%d')
         index = "{0}{1}".format(self.index_prefix, today)
         doc = Document(meta={"index": index, "id":_doc_id(self.hostname, filename)}, **data)
-        doc.save()
+        return doc.save()
 
     def indexify(self, files):
         """Push files to ES index
