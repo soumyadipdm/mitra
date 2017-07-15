@@ -24,13 +24,15 @@ Use-cases:
 How does it work:
 -------------------------
 
-The tool has two mode: indexer and searcher (WIP)
+The tool has two mode: indexer and searcher
 
 **Indexer:** It's a service that runs on all machines. Config file specifies a frequency at which this service is going to read files (specified in the config file, you can add as many as you want). You can specify a maximum size of file; if any file greater than that size, it's ignored with an error log.
 
 A new index is created per day. So you can search historical content/stat of the files. This is important if you're troubleshooting an issue and would like to historical content of files like `/etc/sysctl.conf`or `/proc/meminfo`
 
 Document ID is determined from sha256 hash of host name and name of the file being indexed. This has an advantage while searching, for an example, if you want to see the content of `/etc/hosts` of `xyz`machine, you can directly search the file using it's id obtained from sha256 hash.
+
+**Searcher:** (WIP) coming soon!
 
 Config file:
 ---------------
