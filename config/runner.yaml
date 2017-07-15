@@ -1,0 +1,17 @@
+log:
+  file: /tmp/runner.log
+  maxsize: 10
+
+indexer:
+  prefix: mitra_
+  es_host: ubuntu02
+  es_port: 9200
+  maxsize: 10
+
+files:
+  - /etc/hosts
+  - /etc/resolv.conf
+  - /etc/sysctl.conf
+  - /etc/security/limits.conf
+
+frequency: 300
