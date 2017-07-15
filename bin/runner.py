@@ -1,5 +1,9 @@
 #!/usr/bin/env python2
 
+"""
+Mitra runner: a long running process that indexes list of files specified
+"""
+
 import os
 import sys
 import time
@@ -27,22 +31,37 @@ class Config(object):
         if not self._config.get("frquency"):
             self._config["frequency"] = 300  # in seconds
 
-        if not self._config.get("log"):
-            self._config["log"] = {}
-            self._config["log"]["file"] = "log/runner.log"
-            self._config["log"]["maxsize"] = 10
+        log_levels = {"info": logging.INFO, "debug": logging.DEBUG}
+        log_defaults = {
+            "file": "log/runner.log",
+            "maxsize": 10,
+            "level": log_levels["info"]}
 
-        defaults = {
+        self._setdefaults(log_defaults, "log")
+
+        if self._config["log"]["level"] not in log_levels:
+            self._config["log"]["level"] = log_levels["info"]
+
+        else:
+            level = self._config["log"]["level"]
+            self._config["log"]["level"] = log_levels[level]
+
+        indexer_defaults = {
             "prefix": "mitra_",
             "es_host": "localhost",
             "es_port": 9200,
             "maxsize": 10}
-        if not self._config.get("indexer"):
-            self._config["indexer"] = defaults
+
+        self._setdefaults(indexer_defaults, "indexer")
+
+    def _setdefaults(self, defaults, config_param):
+        if not self._config.get(config_param):
+            self._config[config_param] = defaults
 
         for key in defaults:
-            if not self._config["indexer"].get(key):
-                self._config["indexer"][key] = defaults[key]
+            if not self._config[config_param].get(key):
+                self._config[config_param] = {}
+                self._config[config_param][key] = defaults[key]
 
     def __getattr__(self, attr):
         if attr not in self._config:
@@ -83,18 +102,22 @@ def main():
     log = logging.getLogger()
     log.info("Starting up Mitra Runner")
 
-
     indexer = Indexer(
         config.indexer["prefix"],
         config.indexer["es_host"],
         config.indexer["es_port"],
         config.indexer["maxsize"])
 
-    #with daemon.DaemonContext():
-    while True:
-        indexer.indexify(config.files)
-        log.info("Sleeping for {0}s".format(config.frequency))
-        time.sleep(config.frequency)
+    # with daemon.DaemonContext():
+    try:
+        while True:
+            result = indexer.indexify(config.files)
+            log.debug("Result: {0}".format(str(result)))
+            log.info("Sleeping for {0}s".format(config.frequency))
+            time.sleep(config.frequency)
+    except KeyboardInterrupt:
+        log.info("Stopping Mitra runner")
+
 
 if __name__ == "__main__":
     main()

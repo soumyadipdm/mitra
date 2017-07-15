@@ -11,6 +11,7 @@ config = {
     'version': '0.1',
     'install_requires': [
         'elasticsearch',
+        'elasticsearch-dsl',
         'python-daemon',
         'PyYAML'],
     'packages': ['mitra', 'mitra.indexer', 'mitra.searcher'],

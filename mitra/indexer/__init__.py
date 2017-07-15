@@ -2,12 +2,31 @@ import os
 import socket
 import hashlib
 import logging
+import json
 from datetime import datetime
 
 from elasticsearch import Elasticsearch
+from elasticsearch_dsl import DocType
+from elasticsearch_dsl import Date
+from elasticsearch_dsl import Integer
+from elasticsearch_dsl import Keyword
+from elasticsearch_dsl import Text
+from elasticsearch_dsl.connections import connections
 
 
 log = logging.getLogger()
+
+class Document(DocType):
+    """Schema of the document to be indexed"""
+    filename = Text(fields={"raw": Keyword()})
+    hostname = Text(fields={"raw": Keyword()})
+    content = Text()
+    file_meta = Text()
+    timestamp = Date()
+
+    def save(self, **kwargs):
+        self.timestamp = datetime.utcnow()
+        return super(Document, self).save(**kwargs)
 
 
 def _doc_id(hostname, filename):
@@ -20,6 +39,7 @@ def _doc_id(hostname, filename):
     hash_ = hashlib.sha256()
     hash_.update("{0}_{1}".format(hostname, filename))
     return hash_.hexdigest()
+
 
 
 class Indexer(object):
@@ -37,7 +57,8 @@ class Indexer(object):
         :param es_port: int, Elasticsearch instance port number
         :param max_filesize: int, maximum size of the files to be indexed, in MB
         """
-        self._es = Elasticsearch(["{0}:{1}".format(es_host, es_port)])
+        #self._es = Elasticsearch(["{0}:{1}".format(es_host, es_port)])
+        connections.create_connection(hosts=["{0}:{1}".format(es_host, es_port)])
         self.index_prefix = index_prefix
         self.max_filesize = max_filesize
         self.hostname = socket.gethostname()
@@ -53,8 +74,9 @@ class Indexer(object):
             return
 
         # for safety reason we're not going to read a file
-        # more than `max_filesize`
-        if os.stat(filename).st_size > (self.max_filesize * 1024 * 1024):
+        # more than `max_filesize, if specified
+        if self.max_filesize != - \
+                1 and os.stat(filename).st_size > (self.max_filesize * 1024 * 1024):
             log.error(
                 "{0} is more than 10MB, not going to index it".format(filename))
             return
@@ -65,10 +87,19 @@ class Indexer(object):
         data = {}
         data["filename"] = filename
         data["hostname"] = self.hostname
-        data["timestamp"] = datetime.now()
         data["content"] = content
 
+        stat = os.stat(filename)
+        stat_data = {"st_mode": stat.st_mode,
+                     "st_ino": stat.st_ino,
+                     "st_uid": stat.st_uid,
+                     "st_gid": stat.st_gid,
+                     "st_mtime": stat.st_mtime,
+                     "st_ctime": stat.st_ctime}
+        data["file_meta"] = json.dumps({"stat": stat_data})
+
         return data
+
 
     def _to_index(self, data, filename):
         """Index the data into Elasticsearch
@@ -79,15 +110,8 @@ class Indexer(object):
         # we are re-indexing everyday
         today = datetime.today().strftime('%Y-%m-%d')
         index = "{0}{1}".format(self.index_prefix, today)
-        result = self._es.index(
-            index=index,
-            doc_type="text",
-            id=_doc_id(
-                self.hostname,
-                filename),
-            body=data)
-        log.debug(str(result))
-        return bool(result["_shards"]["successful"])
+        doc = Document(meta={"index": index, "id":_doc_id(self.hostname, filename)}, **data)
+        doc.save()
 
     def indexify(self, files):
         """Push files to ES index

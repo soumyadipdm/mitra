@@ -1,6 +1,7 @@
 log:
   file: /tmp/runner.log
   maxsize: 10
+  level: info
 
 indexer:
   prefix: mitra_
@@ -15,5 +16,8 @@ files:
   - /etc/security/limits.conf
   - /etc/ntp.conf
   - /etc/fstab
+  - /tmp/pkgs
+  - /proc/meminfo
+  - /proc/version
 
 frequency: 300
