@@ -73,7 +73,7 @@ How to run:
 -----------------
 **Indexer**:
 ```
-python bin/runner.py -c config/runner.yaml
+runner -c config/runner.yaml
 ```
 
 **Note**: You can also use [Kibana](https://www.elastic.co/products/kibana) to search through the indices
