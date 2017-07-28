@@ -1,6 +1,6 @@
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
@@ -14,8 +14,12 @@ config = {
         'elasticsearch-dsl',
         'python-daemon',
         'PyYAML'],
-    'packages': ['mitra', 'mitra.indexer', 'mitra.searcher'],
-    'scripts': [],
+    'packages': find_packages(),
+    'entry_points': {
+        'console_scripts': [
+            'runner=mitra.runner:main',
+        ],
+    },
     'name': 'mitra'}
 
 setup(**config)

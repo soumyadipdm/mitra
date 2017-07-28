@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 """
 Mitra runner: a long running process that indexes list of files specified
 """
